@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """ Class c_inputscreen - to handle text input from psychoPy screen
 Based on Thomas' initial implementation"""
@@ -7,7 +7,7 @@ from psychopy import visual, event
 
 class InputScreenHandler:
     """Class to handle text input from psychopy screen """
-
+    
     def __init__(self, screen_win, key_return=['return'], key_quit=['escape'], key_erase=['backspace'],
                  key_in=['lower', 'number'], key_specific=[], in_minimum=0, in_maximum=999999999,
                  input_info_str='', input_explain_min_str='', input_explain_max_str='', input_info_pos=(0, 0),
@@ -42,7 +42,7 @@ class InputScreenHandler:
             if not 'lower' in key_in:
                 self._InputKeyList += self._letters
                 self._onlyUpper = True
-            else:
+            else:    
                 self._InputKeyList += self._shiftkeys
         if 'lower' in key_in:
             self._InputKeyList += self._letters
@@ -78,14 +78,14 @@ class InputScreenHandler:
                         self._ExplainText.draw()
                         self._InputInfoText.draw()
                         self._InputText.draw()
-                        self._ScreenWin.flip()
+                        self._ScreenWin.flip()                    
                     elif len(self._TextInput) > self.InMaximum:
                         self._ExplainText.setText(self.InputExplainMaxStr)
                         self._ExplainText.draw()
                         self._InputInfoText.draw()
                         self._InputText.draw()
-                        self._ScreenWin.flip()
-                    else:
+                        self._ScreenWin.flip() 
+                    else:    
                         self.KeyTerminate = keys
                         wait_for_input = False
                         self.OK = True
@@ -96,7 +96,7 @@ class InputScreenHandler:
                     self._InputInfoText.draw()
                     self._InputText.setText( self._TextInput )
                     self._InputText.draw()
-                    self._ScreenWin.flip()
+                    self._ScreenWin.flip()                    
                 else:
                     buffchar = keys[0]
                     if buffchar in self._InputKeyList:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Flanker experiment for little children.
+"""Dotmixed experiment for little children.
    Response device: MilliKey device or keyboard
 """
 
@@ -23,8 +23,8 @@ import c_file
 import c_inputscreen  # class TK to read data from PsychoPy Screen
 import c_result
 import c_visual
-import c_experiment_core
 import constant
+import c_experiment_core
 
 __author__ = 'Alyona Lainburg'
 __version__ = 'v1.00 20200708'
@@ -37,9 +37,9 @@ RunPath = os.path.abspath(pathname)
 
 # experiment parameters
 parameters = {
-    'DataPath': 'flanker_result_files',  # data directory
-    'FilePrefix': 'Flanker',  # report file prefix
-    'HeaderStaff': 'Flanker boxes',  # Header staff description
+    'DataPath': 'dots_result_files',  # data directory
+    'FilePrefix': 'Dots',  # report file prefix
+    'HeaderStaff': 'red hearts, blue flowers',  # Header staff description
     'ScreenSize': [1024, 768],
     'FullScr': False,
     'NoMonitor': 0,  # 0 is windows 1, 1 is windows 2
@@ -47,9 +47,9 @@ parameters = {
     'BackColor': -1.0,  # range -1 ... 1,
 
     'PicPath': 'Pict',  # pictures directory
-    'FlankerFile': ('blue_congr.jpg', 'blue_incongr.jpg', 'red_congr.jpg', 'red_incongr.jpg'),
+    'DotFile': ('Herz.gif', 'Blume.gif'),
     'ArrowY': -0.3,  # relative distance of arrow from midline down
-    'DotX': 0.0,  # relative distance of dot from midline to the left and right
+    'DotX': 0.3,  # relative distance of dot from midline to the left and right
     'WaitKey': 'space',
     'WaitKeyText': 'Leertaste',
     'TextUnit': 'height',  # ‘height’, ‘norm’, ‘cm’, ‘deg’ or ‘pix’
@@ -95,7 +95,7 @@ def execute_shuffled_stimuli(number_repetitions, stimuli):
         pressed_key = c_visual.instruct_cross_wait(ElementsCross, ElementsCrossPos, ExpWin, time,
                                                    parameters['blank_duration'], event)
         if pressed_key == 'q':
-            c_experiment_core.end_experiment(False, parameters, testMode, data_file, device, core, mk_connection)
+            end_experiment(False)
         if device == constant.PSYCHO_TOOLBOX:
             mk_connection = serial.Serial(mK_serial_port, baudrate=128000, timeout=0.1)
         instruct_pic_wait(stimuli[trail][0], stimuli[trail][1], InstructText, [], i)
@@ -111,27 +111,34 @@ def do_stimuli_execution(dialog_text, number_repetitions, colored_elements):
     if dialog_text is not None:
         show_dialog(dialog_text)
     random.seed()
-    stimuli_probe = c_result.create_mixed_stimuli_centred(number_repetitions, ElementsBlueCongr, ElementsRedCongr,
-                                                          ElementsBlueUncongr, ElementsRedUncongr, ElementsPosCenter)
+    if colored_elements is not None:
+        stimuli_probe = c_result.create_colored_stimuli(number_repetitions, colored_elements, ElementsPosRight,
+                                                        ElementsPosLeft)
+    else:
+        stimuli_probe = c_result.create_mixed_stimuli(number_repetitions, ElementsRed, ElementsPosRight,
+                                                      ElementsPosLeft, ElementsBlue)
     execute_shuffled_stimuli(number_repetitions, stimuli_probe)
 
 
-def get_answer_for_element(initial_answer, color, answ):
+def get_answer_for_element(initial_answer, color, answ, pos):
     """Gets answer correctness from provided context.
      :param initial_answer: initial answer.
      :param color: stimuli element color
      :param answ: key pressed (left or right)
+     :param pos: real stimuli element position (left or right)
      :return: '1' for correct answer and '0' for incorrect answer
      """
     answer = initial_answer
     if color == constant.CONGRUENT_COLOR:
-        if answ == constant.KEY_PRESSED_RIGHT:
+        if (answ == constant.KEY_PRESSED_LEFT and pos == constant.STIMULI_IMAGE_POSITION_LEFT) or \
+                (answ == constant.KEY_PRESSED_RIGHT and pos == constant.STIMULI_IMAGE_POSITION_RIGHT):
             answer = constant.ANSWER_CORRECT
             cumulativeResult.correct_count += 1
         else:
             cumulativeResult.incorrect_count += 1
     if color == constant.UNCONGRUENT_COLOR:
-        if answ == constant.KEY_PRESSED_LEFT:
+        if (answ == constant.KEY_PRESSED_LEFT and pos == constant.STIMULI_IMAGE_POSITION_RIGHT) or \
+                (answ == constant.KEY_PRESSED_RIGHT and pos == constant.STIMULI_IMAGE_POSITION_LEFT):
             answer = constant.ANSWER_CORRECT
             cumulativeResult.correct_count += 1
         else:
@@ -154,10 +161,10 @@ def process_key_pressed(kb_presses, elements_pos, stime, elements, count):
     if kb_presses:
         kpress, ktime = kb_presses[0]
         if kpress == 'q' or kpress == 'escape':
-            c_experiment_core.end_experiment(False, parameters, testMode, data_file, device, core, mk_connection)
+            end_experiment(False)
         if kpress is not None and (kpress == constant.LEFT_KEYCODE or kpress == constant.RIGHT_KEYCODE):
             answ, answer, pos = c_experiment_core.get_initial_values(kpress, elements_pos)
-            answer = get_answer_for_element(answer, elements[1], answ)
+            answer = get_answer_for_element(answer, elements[3], answ, pos)
             if testMode:
                 diff_time = ktime-stime
                 # key pressing was done too quick. We don't consider such key overflow
@@ -173,10 +180,30 @@ def process_key_pressed(kb_presses, elements_pos, stime, elements, count):
                 if answer == constant.ANSWER_CORRECT:
                     results.append(diff_time)
                     cumulativeResult.cumulative_time += diff_time
-                c_file.write_stimuli_row(data_file, count, elements[2], elements[1], answ, answer, diff_time,
+                c_file.write_stimuli_row(data_file, count, pos, elements[3], answ, answer, diff_time,
                                          cumulativeResult.cumulative_time)
             key_pressed = True
     return key_pressed
+
+
+def end_experiment(end_flag):
+    """Ends current experiment.
+    :param end_flag: experiment execution flag. 'False', if experiment was premature terminated
+    """
+    global mk_connection
+    if end_flag:
+        end_text = 'terminated at the end of the experiment'
+    else:
+        end_text = 'terminated by escape key'
+    if parameters['MonitorFlag']:
+        print(end_text)
+    if parameters['DataFlag']:
+        print(end_text)
+    if testMode:
+        data_file.close()
+    if device == constant.PSYCHO_TOOLBOX:
+        mk_connection.close()
+    core.quit()
 
 
 def show_dialog(text):
@@ -186,7 +213,7 @@ def show_dialog(text):
     buffer = [text + ' \n\n\n\n', 'Weiter mit der ', parameters['WaitKeyText']]
     pressed_key = c_visual.instruct_wait(InstructText, ''.join(buffer), parameters['WaitKey'], ExpWin, event)
     if pressed_key == 'q':
-        c_experiment_core.end_experiment(False, parameters, testMode, data_file, device, core, mk_connection)
+        end_experiment(False)
 
 
 def execute_test_step(dialog_text, step, elements, tested_field_name):
@@ -234,13 +261,18 @@ def instruct_pic_wait(elements, elements_pos, wait_text_element, wait_text, coun
                     # timeout waiting for key event
                     if testMode:
                         cumulativeResult.timeout_too_fast_count += 1
-                        c_file.write_stimuli_row(data_file, count, elements[2], elements[1], constant.STIMULI_NO_ANSWER,
+                        pos = constant.STIMULI_IMAGE_POSITION_LEFT
+                        if elements_pos[0][0] > 0:
+                            pos = constant.STIMULI_IMAGE_POSITION_RIGHT
+                        c_file.write_stimuli_row(data_file, count, pos, elements[3], constant.STIMULI_NO_ANSWER,
                                                  constant.STIMULI_NO_ANSWER, react_time,
                                                  cumulativeResult.cumulative_time)
                     return
         flag_wait = False
 
 ###############################################################
+
+
 GlobalClock = core.Clock()  # to keep track of time
 TrialClock = core.Clock()  # to keep track of time
 random.seed()
@@ -284,42 +316,47 @@ FLine2 = c_visual.get_cross_line_2(ExpWin, parameters)
 
 InstructText = c_visual.get_instruct_text(ExpWin, parameters)
 # stimuli images
-CongrStimBlue = visual.ImageStim(ExpWin,
-                                 image=os.path.join(RunPath, parameters['PicPath'], parameters['FlankerFile'][0])
-                                 )
-CongrStimRed = visual.ImageStim(ExpWin,
-                                image=os.path.join(RunPath, parameters['PicPath'], parameters['FlankerFile'][2])
-                                )
-UncongrStimBlue = visual.ImageStim(ExpWin,
-                                   image=os.path.join(RunPath, parameters['PicPath'], parameters['FlankerFile'][1])
-                                   )
-UncongrStimRed = visual.ImageStim(ExpWin,
-                                  image=os.path.join(RunPath, parameters['PicPath'], parameters['FlankerFile'][3])
-                                  )
+CongrStim = visual.ImageStim(ExpWin,
+                             image=os.path.join(RunPath, parameters['PicPath'], parameters['DotFile'][0])
+                             )
+UncongrStim = visual.ImageStim(ExpWin,
+                               image=os.path.join(RunPath, parameters['PicPath'], parameters['DotFile'][1])
+                               )
 while True:
+    #############################
+    testMode = False
     cumulativeResult = c_result.CumulativeResult()
 
     # Cross
     ElementsCross = [FLine1, FLine2]
     ElementsCrossPos = ((parameters['ArrowY']), (0, 0), (0, 0))
     # Images
-    ElementsBlueCongr = [CongrStimBlue, 'blue', '1']
-    ElementsRedCongr = [CongrStimRed, 'red', '1']
-    ElementsBlueUncongr = [UncongrStimBlue, 'blue', '0']
-    ElementsRedUncongr = [UncongrStimRed, 'red', '0']
+    ElementsRed = [CongrStim, FLine1, FLine2, 'red']
+    ElementsBlue = [UncongrStim, FLine1, FLine2, 'blue']
+    ElementsPosLeft = ((-1 * parameters['DotX'], 0), (-1 * parameters['DotX'], parameters['ArrowY']), (0, 0), (0, 0))
+    ElementsPosRight = ((parameters['DotX'], 0), (parameters['DotX'], parameters['ArrowY']), (0, 0), (0, 0))
 
-    ElementsPosCenter = ((0, 0), (0, 0), (0, 0), (0, 0))
     show_dialog('Experiment mit ' + device)
     parameters['SubjectID'] = c_inputscreen.get_proband_id(parameters, ExpWin)
 
+    # Trials with only red stimuli
+    do_stimuli_execution('Übung rotes Herz', parameters['no_probe_repetitions'], ElementsRed)
+    # Trials with only blue stimuli
+    do_stimuli_execution('Übung blaue Blume', parameters['no_probe_repetitions'], ElementsBlue)
+    # Trials with mixed stimuli
+    do_stimuli_execution('Übung Herz/Blume gemischt', parameters['NoRepetitions'], None)
+
+    #############################
     testMode = True
     data_file = c_file.init_file(__version__, __author__, parameters['SubjectID'], parameters['DataPath'], device,
                                  parameters['FilePrefix'], parameters['HeaderStaff'])
-    mixed_results = execute_test_step('Test Flanker', 0, None, 'congr')
-    c_file.write_analysis(data_file, None, None, mixed_results, parameters['DataPath'],
+    congruent_results = execute_test_step('Test Herz', 1, ElementsRed, 'pos')
+    uncongruent_results = execute_test_step('Test Blume', 2, ElementsBlue, 'pos')
+    mixed_results = execute_test_step('Test Herz/Blume', 3, None, 'pos')
+    c_file.write_analysis(data_file, congruent_results, uncongruent_results, mixed_results, parameters['DataPath'],
                           parameters['SubjectID'], "_" + parameters['FilePrefix'] + constant.REPORT_FILE_NAME)
     show_dialog('Experiment beendet. Vielen Dank!')
 
     if device == constant.PSYCHO_TOOLBOX:
         mk_connection.close()
-    c_experiment_core.end_experiment(True, parameters, testMode, data_file, device, core, mk_connection)
+    end_experiment(True)

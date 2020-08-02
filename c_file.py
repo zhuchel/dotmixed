@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """File related functionality. Currently supported: single report and general analysis report"""
 
@@ -16,7 +16,7 @@ pathname = os.path.dirname(sys.argv[0])
 RunPath = os.path.abspath(pathname)
 
 
-def init_file(version, author, subject_id, data_path, device):
+def init_file(version, author, subject_id, data_path, device, prefix, staff):
     """
     Creates and initializes single report file.
     :param version: application version
@@ -24,38 +24,36 @@ def init_file(version, author, subject_id, data_path, device):
     :param subject_id: proband id
     :param data_path: data directory name, relative to current execution path
     :param device: current device
+    :param prefix: report file prefix
+    :param staff: header staff description
     """
 
-    print('data_path=', data_path)
     # create directory if it doesn't exist
     if not os.path.exists(get_file(data_path, '')):
         os.makedirs(get_file(data_path, ''))
 
     date_str = time.strftime("%Y%m%d_%H%M", time.localtime())  # add the current time
-    file_name = 'Flanker' + '_' + subject_id + '_' + date_str + '_' + platform.node()
+    file_name = prefix + '_' + subject_id + '_' + date_str + '_' + platform.node()
     file = open(os.path.join(RunPath, data_path, file_name + '.txt'), 'w')
     file.write('File: %s\n' % file_name)
     file.write('SourceCode: %s, %s, %s\n' % (__file__, version, author))
     file.write('Host: %s, OS: %s, Python: %s, PsychoPy: %s\n' % (platform.node(), platform.platform(terse=0),
                                                                  platform.python_version(), __version__))
     file.write('Response device:\t' + device + '\n')
-    file.write('Staff:\t\t\t' + 'flanker boxes' + '\n')
+    file.write('Staff:\t\t\t' + staff + '\n')
     return file
 
 
-def write_step_header(step, data_file):
+def write_step_header(step, data_file, tested_field_name):
     """
     Writes header for certain step execution report
     :param step: step number
     :param data_file: data file to write into
+    :param tested_field_name: filed name varying between experiments, e.g. 'pos' for dotmixed
     """
-    data_file.write("\n\n\t\t\tStep " + str(step) + "\n")
-    data_file.write("\ntrial\tpos\tcolor\tansw\teval\tRT(ms)\t\tRT-right-cum(ms)")
-
-
-def write_step_header1(step, data_file):
-    data_file.write("\n\n\t\t\tStep " + str(step) + "\n")
-    data_file.write("\ntrial\tcongr\tcolor\tansw\teval\tRT(ms)\t\tRT-right-cum(ms)")
+    if step != 0:
+        data_file.write("\n\n\t\t\tStep " + str(step) + "\n")
+    data_file.write("\ntrial\t" + tested_field_name + "\tcolor\tansw\teval\tRT(ms)\t\tRT-right-cum(ms)")
 
 
 def write_congruent_analysis(file, congruent, subject_id, formatting_tab):
@@ -97,14 +95,14 @@ def write_analysis_header(file, prefix):
     file.write("\tic_r\tic_r_quote\tic_r_rt_mean\tic_r_rt_median\tic_w\tic_err")
     file.write("\tm_r\tm_r_quote\tm_r_rt_mean\tm_r_rt_median\tm_w\tm_err")
 
-def write_analysis_header1(file, prefix):
+
+def write_analysis_header_mixed(file, prefix):
     """
-    Writes analysis report header
+    Writes analysis report header for mixed experiments only
     :param file: file to write the header into
     :param prefix: New lines prefix for single report. Prefix is empty for general reports
     """
     file.write(prefix + "prob_id")
-    #file.write("\tic_r\tic_r_quote\tic_r_rt_mean\tic_r_rt_median\tic_w\tic_err")
     file.write("\tm_r\tm_r_quote\tm_r_rt_mean\tm_r_rt_median\tm_w\tm_err")
 
 
@@ -140,22 +138,25 @@ def write_analysis(data_file, congruent, incongruent, mixed, data_path, proband_
     :param proband_id: proband id
     :param report_fie_name: file name of the general analysis report
     """
-    write_analysis_header1(data_file, "\n\n")
+    write_analysis_header_mixed(data_file, "\n\n")
     if not os.path.isfile(get_file(data_path, report_fie_name)):
         # create the general analysis report, if it doesn't exist
         data_file_all = open(get_file(data_path, report_fie_name), 'w')
-        write_analysis_header1(data_file_all, "")
-
+        write_analysis_header_mixed(data_file_all, "")
     else:
         # open the general analysis report for appending, if it exists
         data_file_all = open(get_file(data_path, report_fie_name), 'a+')
-    #write_congruent_analysis(data_file, congruent, proband_id, '\t')
-    #write_congruent_analysis(data_file_all, congruent, proband_id, '')
-    #write_result_analysis(data_file, incongruent, '\t')
-    #write_result_analysis(data_file_all, incongruent, '')
-    data_file.write("\n" + proband_id)
+    if congruent is not None:
+        write_congruent_analysis(data_file, congruent, proband_id, '\t')
+        write_congruent_analysis(data_file_all, congruent, proband_id, '')
+    if incongruent is not None:
+        write_result_analysis(data_file, incongruent, '\t')
+        write_result_analysis(data_file_all, incongruent, '')
+    if congruent is None and incongruent is None:
+        data_file.write("\n" + proband_id)
     write_result_analysis(data_file, mixed, '\t')
-    data_file_all.write("\n" + proband_id)
+    if congruent is None and incongruent is None:
+        data_file_all.write("\n" + proband_id)
     write_result_analysis(data_file_all, mixed, '')
     data_file_all.close()
 

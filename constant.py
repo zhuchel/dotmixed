@@ -3,7 +3,7 @@ PSYCHO_TOOLBOX = 'MilliKey'
 KEYBOARD = 'Tastatur'
 # Use MilliKey will wait before issuing the requested key press event.
 MILLI_KEY_DELAY = 5000
-REPORT_FILE_NAME = '_Flanker_all_analysed_data.txt'
+REPORT_FILE_NAME = '_all_analysed_data.txt'
 STIMULI_NO_ANSWER = "-"
 STIMULI_IMAGE_POSITION_LEFT = 'L'
 STIMULI_IMAGE_POSITION_RIGHT = 'R'

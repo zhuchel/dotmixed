@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Experiment related classes and functions"""
 
@@ -98,27 +98,28 @@ def create_mixed_stimuli(number_repetitions, elements_congruent, elements_pos_ri
     return stimuli
 
 
-def create_mixed_stimuli1(number_repetitions, elements_congruent_blue, elements_congruent_red,
-                          elements_uncongruent_blue, elements_uncongruent_red, elements_pos_left):
-    """Creates mixed stimuli.
+def create_mixed_stimuli_centred(number_repetitions, elements_congruent_blue, elements_congruent_red,
+                          elements_uncongruent_blue, elements_uncongruent_red, elements_pos):
+    """Creates mixed stimuli for centred experiments.
     :param number_repetitions: number of repetitions
-    :param elements_congruent: congruent elements
-    :param elements_pos_right: colored elements in right positions
-    :param elements_pos_left: colored elements in left positions
-    :param elements_uncongruent: non congruent elements
+    :param elements_congruent_blue: congruent elements blue color
+    :param elements_congruent_red: congruent elements red color
+    :param elements_uncongruent_blue: non-congruent elements blue color
+    :param elements_uncongruent_red:  non-congruent elements red color
+    :param elements_pos:  elements positions
     :return: created mixed stimuli
     """
     normed = round(number_repetitions / 4)
     stimuli = [[0 for x in range(2)] for y in range(number_repetitions)]
     for i in range(normed):
         stimuli[i][0] = elements_congruent_blue
-        stimuli[i][1] = elements_pos_left
+        stimuli[i][1] = elements_pos
         stimuli[i + normed][0] = elements_congruent_red
-        stimuli[i + normed][1] = elements_pos_left
+        stimuli[i + normed][1] = elements_pos
         stimuli[i + round(number_repetitions / 2)][0] = elements_uncongruent_blue
-        stimuli[i + round(number_repetitions / 2)][1] = elements_pos_left
+        stimuli[i + round(number_repetitions / 2)][1] = elements_pos
         stimuli[i + 3 * normed][0] = elements_uncongruent_red
-        stimuli[i + 3 * normed][1] = elements_pos_left
+        stimuli[i + 3 * normed][1] = elements_pos
     return stimuli
 
 

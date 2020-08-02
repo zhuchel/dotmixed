@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """GUI related functions"""
 
@@ -9,9 +9,9 @@ from psychopy import visual
 
 # gets main window
 def get_exp_win(parameters):
-    return visual.Window(parameters['ScreenSize'], units=parameters['ScreenUnits'], fullscr=parameters['FullScr'],
-                         screen=parameters['NoMonitor'], color=parameters['BackColor'],
-                         allowGUI=not parameters['FullScr'])
+   return visual.Window(parameters['ScreenSize'], units=parameters['ScreenUnits'], fullscr=parameters['FullScr'],
+                        screen=parameters['NoMonitor'], color=parameters['BackColor'],
+                        allowGUI=not parameters['FullScr'])
 
 
 # creates cross line 1
